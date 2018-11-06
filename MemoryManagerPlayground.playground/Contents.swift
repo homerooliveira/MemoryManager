@@ -91,12 +91,22 @@ final class MemoryManager {
         var minIndex = index
         var maxIndex = index
         
-        if let minIndex2 = blocks.index(index, offsetBy: -1, limitedBy: blocks.count), blocks[minIndex2].isFree {
-            minIndex = minIndex2
-        }
-        
-        if let maxIndex2 = blocks.index(index, offsetBy: 1, limitedBy: blocks.count), blocks[maxIndex2].isFree {
-            maxIndex = maxIndex2
+        if blocks.startIndex == index {
+            if let minIndex2 = blocks.index(index, offsetBy: -1, limitedBy: blocks.count), blocks[minIndex2].isFree {
+                minIndex = minIndex2
+            }
+        } else if blocks.endIndex - 1 == index {
+            if let maxIndex2 = blocks.index(index, offsetBy: 1, limitedBy: blocks.count), blocks[maxIndex2].isFree {
+                maxIndex = maxIndex2
+            }
+        } else {
+            if let minIndex2 = blocks.index(index, offsetBy: -1, limitedBy: blocks.count), blocks[minIndex2].isFree {
+                minIndex = minIndex2
+            }
+            
+            if let maxIndex2 = blocks.index(index, offsetBy: 1, limitedBy: blocks.count), blocks[maxIndex2].isFree {
+                maxIndex = maxIndex2
+            }
         }
         
         let minBlock = blocks[minIndex]
