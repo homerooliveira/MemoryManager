@@ -1,11 +1,11 @@
 import Foundation
 
 struct Command {
-    enum Key: String {
+    enum Operation: String {
         case alloc = "S"
         case free = "L"
     }
-    let key: Key
+    let operation: Operation
     let value: Int
 }
 
@@ -25,8 +25,12 @@ struct Block {
     func make(from size: Size) -> [Block] {
         let firstBlock = Block(id: lastId, range: range.lowerBound..<range.lowerBound + size, isFree: false)
         let secondBlock = Block(id: -1, range: (range.lowerBound + size)..<range.upperBound, isFree: true)
+        var blocks = [firstBlock]
+        if !secondBlock.range.isEmpty {
+            blocks.append(secondBlock)
+        }
         defer { lastId += 1 }
-        return [firstBlock, secondBlock]
+        return blocks
     }
 }
 
@@ -37,6 +41,12 @@ extension Block: CustomStringConvertible {
         let sizeDescription = "tamanho \(range.count)"
         return "\(rangeDescription) \(isFreeDescription) (\(sizeDescription))"
     }
+}
+
+enum AllocResult {
+    case spaceAlloced(idOfBlock: Int)
+    case fragementation
+    case noSpace
 }
 
 final class MemoryManager {
@@ -51,16 +61,17 @@ final class MemoryManager {
         return blocks.firstIndex(where: { $0.hasSize(size) }) != nil
     }
     
-    func alloc(size: Int) {
+    func alloc(size: Int) -> AllocResult {
+        guard blocks.contains(where: { $0.isFree }) else { return .noSpace }
+        
         guard let index = blocks.firstIndex(where: { $0.hasSize(size) }) else {
-            printBlocks()
-            printFragmentation(size)
-            return
+            return .fragementation
         }
 
         let blocksFromSize = blocks[index].make(from: size)
         blocks.remove(at: index)
         blocks.insert(contentsOf: blocksFromSize, at: index)
+        return .spaceAlloced(idOfBlock: index)
     }
     
     private func printFragmentation(_ size: Size) {
@@ -81,7 +92,7 @@ final class MemoryManager {
         defragmentBlocks(index: index)
     }
     
-    private func printBlocks() {
+    func printBlocks() {
         blocks.forEach { (block) in
             print(block)
         }
@@ -123,9 +134,12 @@ let manager = MemoryManager(range: 100..<1250)
 manager.alloc(size: 250)
 manager.alloc(size: 100)
 manager.alloc(size: 200)
-manager.free(id: 2)
+//manager.free(id: 2)
 manager.alloc(size: 150)
 manager.alloc(size: 150)
 manager.alloc(size: 150)
-manager.free(id: 5)
+manager.alloc(size: 150)
+manager.alloc(size: 150)
+manager.printBlocks()
+//manager.free(id: 5)
 manager.alloc(size: 200)
