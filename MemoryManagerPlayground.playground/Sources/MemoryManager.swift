@@ -1,7 +1,5 @@
 import Foundation
 
-public var lastId = 1
-
 public enum AllocResult {
     case spaceAlloced(idOfBlock: Int)
     case fragementation
@@ -10,9 +8,10 @@ public enum AllocResult {
 
 public final class MemoryManager {
     var blocks: [Block] = []
+    public var lastId = 1
     
     public init(range: Range<Size>) {
-        let block = Block(id: -1, range: range, isFree: true)
+        let block = Block.free(range: range)
         blocks.append(block)
     }
     
@@ -30,31 +29,34 @@ public final class MemoryManager {
     }
     
     private func make(block: Block, from size: Size) -> [Block] {
-        let firstBlock = Block(id: lastId, range: block.range.lowerBound..<block.range.lowerBound + size, isFree: false)
-        let secondBlock = Block(id: -1, range: (block.range.lowerBound + size)..<block.range.upperBound, isFree: true)
+        let firstBlock = Block.alloced(id: lastId, range: block.range.lowerBound..<block.range.lowerBound + size)
+        let secondBlock = Block.free(range: (block.range.lowerBound + size)..<block.range.upperBound)
         var blocks = [firstBlock]
-        if !secondBlock.range.isEmpty {
+        if secondBlock.size > 0 {
             blocks.append(secondBlock)
         }
-        defer { lastId += 1 }
+        lastId += 1
         return blocks
     }
     
     private func printFragmentation(_ size: Size) {
         let freeSize = blocks.lazy
             .filter { $0.isFree }
-            .map { $0.range.count }
+            .map { $0.size }
             .reduce(0, +)
         
         print("\(freeSize) livres, \(size) solicitados - fragmentação externa.")
     }
     
     public func free(id: Int) {
-        guard let index = blocks.firstIndex(where: { $0.id == id && id != -1 }) else {
+        guard id > 0 else { return }
+        guard let index = blocks.firstIndex(where: { $0.id == id }) else {
             return
         }
-        blocks[index].id = -1
-        blocks[index].isFree = true
+        
+        let rangeOfBlock = blocks[index].range
+        blocks[index] = .free(range: rangeOfBlock)
+        
         defragmentBlocks(index: index)
     }
     
@@ -90,7 +92,7 @@ public final class MemoryManager {
         let maxBlock = blocks[maxIndex]
         
         blocks.removeSubrange(minIndex...maxIndex)
-        let newBlock = Block(id: -1, range: minBlock.range.lowerBound..<maxBlock.range.upperBound, isFree: true)
+        let newBlock = Block.free(range: minBlock.range.lowerBound..<maxBlock.range.upperBound)
         blocks.insert(newBlock, at: minIndex)
     }
 }
