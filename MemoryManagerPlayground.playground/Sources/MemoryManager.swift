@@ -25,7 +25,7 @@ public final class MemoryManager {
         let blocksFromSize = make(block: blocks[index], from: size)
         blocks.remove(at: index)
         blocks.insert(contentsOf: blocksFromSize, at: index)
-        return .spaceAlloced(idOfBlock: index)
+        return .spaceAlloced(idOfBlock: lastId - 1)
     }
     
     private func make(block: Block, from size: Size) -> [Block] {
@@ -39,7 +39,7 @@ public final class MemoryManager {
         return blocks
     }
     
-    private func printFragmentation(_ size: Size) {
+    public func printFragmentation(_ size: Size) {
         let freeSize = blocks.lazy
             .filter { $0.isFree }
             .map { $0.size }

@@ -7,4 +7,9 @@ public struct Command {
     }
     public let operation: Operation
     public let value: Int
+    
+    public init(operation: Operation, value: Int) {
+        self.operation = operation
+        self.value = value
+    }
 }

@@ -1,16 +1,19 @@
 import Foundation
 
-let manager = MemoryManager(range: 100..<1250)
+guard let url = Bundle.main.url(forResource: "test", withExtension: "txt") else {
+    fatalError("Url invalida")
+}
 
-manager.alloc(size: 250)
-manager.alloc(size: 100)
-manager.alloc(size: 200)
-//manager.free(id: 2)
-manager.alloc(size: 150)
-manager.alloc(size: 150)
-manager.alloc(size: 150)
-manager.alloc(size: 150)
-manager.alloc(size: 150)
-manager.printBlocks()
-//manager.free(id: 5)
-manager.alloc(size: 200)
+let (range, commands) = readFile(from: url)
+
+let manager = MemoryManager(range: range)
+
+commands.forEach { (command) in
+    switch command.operation {
+    case .alloc:
+        print(manager.alloc(size: command.value), command.value, manager)
+    case .free:
+        manager.free(id: command.value)
+        print("Liberando bloco \(command.value)")
+    }
+}
