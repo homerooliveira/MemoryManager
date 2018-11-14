@@ -1,10 +1,10 @@
 import Foundation
 
-public func print(_ allocResult: AllocResult, _ size: Size, _ manager: MemoryManager) {
+public func print(_ allocResult: AllocResult, _ manager: MemoryManager) {
     switch allocResult {
-    case .spaceAlloced(let idOfBlock):
+    case .spaceAlloced(let idOfBlock, let size):
         print("Bloco criado id \(idOfBlock) com o tamanho \(size)")
-    case .fragementation:
+    case .fragementation(let size):
         print()
         manager.printBlocks()
         print()

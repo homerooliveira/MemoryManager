@@ -1,14 +1,15 @@
 import Foundation
 
 public enum AllocResult {
-    case spaceAlloced(idOfBlock: Int)
-    case fragementation
+    case spaceAlloced(idOfBlock: Int, size: Size)
+    case fragementation(Size)
     case noSpace
 }
 
 public final class MemoryManager {
     var blocks: [Block] = []
-    public var lastId = 1
+    public var solicitations: [Command] = []
+    var lastId = 1
     
     public init(range: Range<Size>) {
         let block = Block.free(range: range)
@@ -19,13 +20,15 @@ public final class MemoryManager {
         guard blocks.contains(where: { $0.isFree }) else { return .noSpace }
         
         guard let index = blocks.firstIndex(where: { $0.hasSize(size) }) else {
-            return .fragementation
+            let command = Command(operation: .alloc, value: size)
+            solicitations.append(command)
+            return .fragementation(size)
         }
         
         let blocksFromSize = make(block: blocks[index], from: size)
         blocks.remove(at: index)
         blocks.insert(contentsOf: blocksFromSize, at: index)
-        return .spaceAlloced(idOfBlock: lastId - 1)
+        return .spaceAlloced(idOfBlock: lastId - 1, size: size)
     }
     
     private func make(block: Block, from size: Size) -> [Block] {
@@ -58,11 +61,30 @@ public final class MemoryManager {
         blocks[index] = .free(range: rangeOfBlock)
         
         defragmentBlocks(index: index)
+        attempToAlloc()
     }
     
     public func printBlocks() {
         blocks.forEach { (block) in
             print(block)
+        }
+    }
+    
+    private func attempToAlloc() {
+        var indicesToRemove: [Int] = []
+        solicitations.enumerated().forEach { (index, command) in
+            let result = alloc(size: command.value)
+            switch result {
+            case let .spaceAlloced(idOfBlock, size):
+                print("Consegui criar o bloco \(idOfBlock) com o tamanho \(size)")
+                indicesToRemove.append(index)
+            default:
+                print("Não conseguiu allocar o bloco com tamanho \(command.value)")
+            }
+        }
+        
+        indicesToRemove.forEach { (index) in
+            solicitations.remove(at: index)
         }
     }
     
