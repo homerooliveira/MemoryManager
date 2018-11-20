@@ -10,6 +10,12 @@ public final class MemoryManager {
     var blocks: [Block] = []
     public var solicitations: [Command] = []
     var lastId = 1
+    var freeSize: Int {
+        return blocks.lazy
+            .filter { $0.isFree }
+            .map { $0.size }
+            .reduce(0, +)
+    }
     
     public init(range: Range<Size>) {
         let block = Block.free(range: range)
@@ -17,11 +23,9 @@ public final class MemoryManager {
     }
     
     public func alloc(size: Int) -> AllocResult {
-        guard blocks.contains(where: { $0.isFree }) else { return .noSpace }
+        guard size < freeSize else { return .noSpace }
         
         guard let index = blocks.firstIndex(where: { $0.hasSize(size) }) else {
-            let command = Command(operation: .alloc, value: size)
-            solicitations.append(command)
             return .fragementation(size)
         }
         
@@ -43,11 +47,6 @@ public final class MemoryManager {
     }
     
     public func printFragmentation(_ size: Size) {
-        let freeSize = blocks.lazy
-            .filter { $0.isFree }
-            .map { $0.size }
-            .reduce(0, +)
-        
         print("\(freeSize) livres, \(size) solicitados - fragmentação externa.")
     }
     
@@ -71,21 +70,17 @@ public final class MemoryManager {
     }
     
     private func attempToAlloc() {
-        var indicesToRemove: [Int] = []
-        solicitations.enumerated().forEach { (index, command) in
+        for (index, command) in solicitations.enumerated() {
             let result = alloc(size: command.value)
             switch result {
             case let .spaceAlloced(idOfBlock, size):
                 print("Consegui criar o bloco \(idOfBlock) com o tamanho \(size)")
-                indicesToRemove.append(index)
+                solicitations[index].isApplyed = true
             default:
                 print("Não conseguiu allocar o bloco com tamanho \(command.value)")
             }
         }
-        
-        indicesToRemove.forEach { (index) in
-            solicitations.remove(at: index)
-        }
+        solicitations.removeAll { $0.isApplyed }
     }
     
     private func defragmentBlocks(index: Int) {
@@ -93,12 +88,12 @@ public final class MemoryManager {
         var maxIndex = index
         
         if blocks.startIndex == index { // Verifica se o bloco que está sendo liberado é primeiro indice do array
-            if let minIndex2 = blocks.index(index, offsetBy: -1, limitedBy: blocks.count), blocks[minIndex2].isFree {
-                minIndex = minIndex2
-            }
-        } else if blocks.endIndex - 1 == index { // Verifica se o bloco que está sendo liberado é último indice do array
             if let maxIndex2 = blocks.index(index, offsetBy: 1, limitedBy: blocks.count), blocks[maxIndex2].isFree {
                 maxIndex = maxIndex2
+            }
+        } else if blocks.endIndex - 1 == index { // Verifica se o bloco que está sendo liberado é último indice do array
+            if let minIndex2 = blocks.index(index, offsetBy: -1, limitedBy: blocks.count), blocks[minIndex2].isFree {
+                minIndex = minIndex2
             }
         } else { // Caso o indice esteja no meio do array
             if let minIndex2 = blocks.index(index, offsetBy: -1, limitedBy: blocks.count), blocks[minIndex2].isFree {

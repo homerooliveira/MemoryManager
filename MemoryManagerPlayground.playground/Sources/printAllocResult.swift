@@ -8,6 +8,8 @@ public func print(_ allocResult: AllocResult, _ manager: MemoryManager) {
         print()
         manager.printBlocks()
         print()
+        let command = Command(operation: .alloc, value: size)
+        manager.solicitations.append(command)
         manager.printFragmentation(size)
     case .noSpace:
         print()

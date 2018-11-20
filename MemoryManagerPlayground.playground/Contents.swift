@@ -1,6 +1,6 @@
 import Foundation
 
-guard let url = Bundle.main.url(forResource: "test", withExtension: "txt") else {
+guard let url = Bundle.main.url(forResource: "test2", withExtension: "txt") else {
     fatalError("Url invalida")
 }
 
