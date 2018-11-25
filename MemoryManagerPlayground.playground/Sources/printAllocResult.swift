@@ -1,5 +1,6 @@
 import Foundation
 
+/// Imprimi na tela o resultado da alocação
 public func printAlloc(_ allocResult: AllocResult, size: Size,_ manager: MemoryManager) {
     switch allocResult {
     case .spaceAlloced(let idOfBlock, let size):

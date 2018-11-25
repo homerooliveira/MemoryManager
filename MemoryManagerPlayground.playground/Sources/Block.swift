@@ -2,12 +2,14 @@ import Foundation
 
 public typealias Size = Int
 
+/// Representa o block de memória
 public enum Block {
     case free(range: Range<Size>)
     case alloced(id: Int, range: Range<Size>)
 }
 
 extension Block {
+    /// Retorna o Id do bloco
     public var id: Int? {
         switch self {
         case .free:
@@ -17,6 +19,7 @@ extension Block {
         }
     }
     
+    /// retorna o alcance do bloco
     public var range: Range<Size> {
         switch self {
         case .free(let range):
@@ -26,10 +29,12 @@ extension Block {
         }
     }
     
+    /// retorna o tamanho do bloco
     public var size: Size {
         return range.count
     }
     
+    /// retorna se o bloco está livre
     public var isFree: Bool {
         switch self {
         case .free:
@@ -39,12 +44,14 @@ extension Block {
         }
     }
     
+    /// valida se o bloco tem o tamanho requerido
     public func hasSize(_ size: Size) -> Bool {
         return isFree && self.size >= size
     }
 }
 
 extension Block: CustomStringConvertible {
+    /// Tranforma o block em uma string
     public var description: String {
         let rangeDescription = "\(range.lowerBound)-\(range.upperBound)"
         let isFreeDescription: String

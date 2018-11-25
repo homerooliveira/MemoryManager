@@ -1,5 +1,6 @@
 import Foundation
 
+/// Representa um comando que o usuário pode inserir no arquivo
 public struct Command {
     public enum Operation: String {
         case alloc = "S"
